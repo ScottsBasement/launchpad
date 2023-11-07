@@ -21,8 +21,10 @@
     <script>
         document.getElementById('searchButton').addEventListener('click', async () => {
             function getBingResults(query) {
-                const url = `https://www.bing.com/search?q=${query}`;
-                return fetch(url)
+                const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+                const targetUrl = `https://www.bing.com/search?q=${query}`;
+                
+                return fetch(proxyUrl + targetUrl)
                     .then((response) => response.text())
                     .then((data) => new DOMParser().parseFromString(data, 'text/html'))
                     .then((doc) => doc.querySelectorAll('a'))
@@ -31,6 +33,7 @@
                         return [];
                     });
             }
+
 
             function isUnblockedGame(url, allowedDomains) {
                 for (const domain of allowedDomains) {
