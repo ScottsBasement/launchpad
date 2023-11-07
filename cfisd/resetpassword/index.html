@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Reset Password</title>
+    <style>
+        /* CSS styling for the results list */
+        #results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Unblocked Sites Locator</h1>
+      <h2>Search for unblocked sites, including games, proxies, etc.</h2>
+    <button id="searchButton">Search!</button>
+    <div id="results">
+        <!-- Results will be displayed here -->
+    </div>
+
+    <script>
+        const axios = require('axios');
+        const cheerio = require('cheerio');
+        const fs = require('fs');
+
+        function getBingResults(query) {
+            // ... (same as the previous JavaScript code)
+
+            return axios
+                .get(url, { headers })
+                .then((response) => {
+                    const $ = cheerio.load(response.data);
+                    const links = $('a');
+                    return links;
+                })
+                .catch((error) => {
+                    console.error('Error occurred during the request:', error);
+                    return [];
+                });
+        }
+
+        function isUnblockedGame(url, allowedDomains) {
+            // ... (same as the previous JavaScript code)
+        }
+
+        function saveToFile(games, domain) {
+            // ... (same as the previous JavaScript code)
+        }
+
+        document.getElementById('searchButton').addEventListener('click', async () => {
+            const query = 'unblocked games links';
+
+            const allowedDomains = [
+                '.firebaseapp.com',
+                '.pages.dev',
+                '.web.app',
+                '.vercel.app',
+                '.github.io',
+                '.netlify.app',
+                '.repl.co',
+                '.herokuapp.com',
+                '.csb.app',
+                '.cyclic.app',
+            ];
+
+            const links = await getBingResults(query);
+
+            const domainFiles = {};
+            allowedDomains.forEach((domain) => {
+                domainFiles[domain] = new Set();
+            });
+
+            let noUnblockedGames = true;
+
+            links.each((_, link) => {
+                const href = link.attribs.href;
+                if (href && href.startsWith('http')) {
+                    const domain = isUnblockedGame(href, allowedDomains);
+                    if (domain) {
+                        domainFiles[domain].add(href);
+                    }
+                }
+            });
+
+            const resultsElement = document.getElementById('results');
+            resultsElement.innerHTML = '';
+
+            for (const domain in domainFiles) {
+                const games = Array.from(domainFiles[domain]);
+                if (games.length > 0) {
+                    noUnblockedGames = false;
+                    saveToFile(games, domain);
+                    const resultItem = document.createElement('p');
+                    resultItem.textContent = `${games.length} Found, Got Em In ${domain}!!`;
+                    resultsElement.appendChild(resultItem);
+                }
+            }
+
+            if (noUnblockedGames) {
+                const noResultsItem = document.createElement('p');
+                noResultsItem.textContent = 'No Unblocked Games :(';
+                resultsElement.appendChild(noResultsItem);
+            }
+        });
+    </script>
+</body>
+</html>
