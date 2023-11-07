@@ -20,20 +20,23 @@
 
     <script>
         document.getElementById('searchButton').addEventListener('click', async () => {
-            function getBingResults(query) {
-                const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-                const targetUrl = `https://www.bing.com/search?q=${query}`;
-                
-                return fetch(proxyUrl + targetUrl)
-                    .then((response) => response.text())
-                    .then((data) => new DOMParser().parseFromString(data, 'text/html'))
-                    .then((doc) => doc.querySelectorAll('a'))
-                    .catch((error) => {
-                        console.error('Error occurred during the request:', error);
-                        return [];
-                    });
-            }
-
+        function getBingResults(query) {
+            const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+            const targetUrl = `https://www.bing.com/search?q=${query}`;
+        
+            return fetch(proxyUrl + targetUrl)
+                .then((response) => response.text())
+                .then((data) => {
+                    const doc = new DOMParser().parseFromString(data, 'text/html');
+                    const linkElements = doc.querySelectorAll('.b_algo a');
+                    const links = Array.from(linkElements).map((el) => el.getAttribute('href'));
+                    return links;
+                })
+                .catch((error) => {
+                    console.error('Error occurred during the request:', error);
+                    return [];
+                });
+        }
 
             function isUnblockedGame(url, allowedDomains) {
                 for (const domain of allowedDomains) {
