@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Reset Password</title>
+    <title>Unblocked Sites Locator</title>
     <style>
         /* CSS styling for the results list */
         #results {
@@ -18,112 +18,40 @@
         <!-- Results or "Searching..." message will be displayed here -->
     </div>
 
-    
     <div id="progress">
         <progress value="0" max="100" id="progressBar"></progress>
         <p id="progressText">0%</p>
     </div>
 
-   <script src="https://unpkg.com/puppeteer@10.0.0"></script>
+    <script src="https://unpkg.com/puppeteer@10.0.0"></script>
 
-<script>
-    document.getElementById('searchButton').addEventListener('click', async () => {
-        // Ensure Puppeteer is available before proceeding
-        if (window.puppeteer) {
-            const browser = await puppeteer.launch();
-            const page = await browser.newPage();
-            await page.goto(`https://www.bing.com/search?q=${query}`);
+    <script>
+        document.getElementById('searchButton').addEventListener('click', async () => {
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
 
-            const links = await page.evaluate(() => {
-                const linkElements = Array.from(document.querySelectorAll('.b_algo a'));
-                return linkElements.map(link => link.getAttribute('href'));
-            });
+            // Ensure Puppeteer is available before proceeding
+            if (window.puppeteer) {
+                const browser = await puppeteer.launch();
+                const page = await browser.newPage();
+                await page.goto(`https://www.bing.com/search?q=${query}`);
 
-            // Calculate progress
-            const progress = (links.length / linkElements.length) * 100;
-
-            // Update progress bar
-            progressBar.value = progress;
-            progressText.textContent = `${Math.round(progress)}%`;
-
-            await browser.close();
-        } else {
-            console.error('Puppeteer is not available.');
-        }
-    });
-</script>
-
-            function isUnblockedGame(url, allowedDomains) {
-                for (const domain of allowedDomains) {
-                    if (url.includes(domain)) {
-                        return domain;
-                    }
-                }
-                return null;
-            }
-
-            function saveToFile(games, domain) {
-                if (games.length > 0) {
-                    const outputFileName = `${domain}.txt`;
-                    const resultItem = document.createElement('p');
-                    resultItem.textContent = `${games.length} Found, Got Em In ${domain}!!`;
-                    resultsElement.appendChild(resultItem);
-                }
-            }
-
-            const query = 'unblocked games links';
-
-            const allowedDomains = [
-                '.firebaseapp.com',
-                '.pages.dev',
-                '.web.app',
-                '.vercel.app',
-                '.github.io',
-                '.netlify.app',
-                '.repl.co',
-                '.herokuapp.com',
-                '.csb.app',
-                '.cyclic.app',
-            ];
-
-            const resultsElement = document.getElementById('results');
-            resultsElement.innerHTML = 'Searching...';
-
-            getBingResults(query)
-                .then((links) => {
-                    const domainFiles = {};
-                    allowedDomains.forEach((domain) => {
-                        domainFiles[domain] = new Set();
-                    });
-
-                    let noUnblockedGames = true;
-
-                    links.forEach((link) => {
-                        const href = link;
-                        if (href && href.startsWith('http')) {
-                            const domain = isUnblockedGame(href, allowedDomains);
-                            if (domain) {
-                                domainFiles[domain].add(href);
-                            }
-                        }
-                    });
-
-                    resultsElement.innerHTML = ''; // Clear the "Searching..." message
-
-                    for (const domain in domainFiles) {
-                        const games = Array.from(domainFiles[domain]);
-                        if (games.length > 0) {
-                            noUnblockedGames = false;
-                            saveToFile(games, domain);
-                        }
-                    }
-
-                    if (noUnblockedGames) {
-                        const noResultsItem = document.createElement('p');
-                        noResultsItem.textContent = 'No Unblocked Games :(';
-                        resultsElement.appendChild(noResultsItem);
-                    }
+                const links = await page.evaluate(() => {
+                    const linkElements = Array.from(document.querySelectorAll('.b_algo a'));
+                    return linkElements.map(link => link.getAttribute('href'));
                 });
+
+                // Calculate progress
+                const progress = (links.length / linkElements.length) * 100;
+
+                // Update progress bar
+                progressBar.value = progress;
+                progressText.textContent = `${Math.round(progress)}%`;
+
+                await browser.close();
+            } else {
+                console.error('Puppeteer is not available.');
+            }
         });
     </script>
 </body>
