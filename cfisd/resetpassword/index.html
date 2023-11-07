@@ -29,7 +29,15 @@
                 .then((data) => {
                     const doc = new DOMParser().parseFromString(data, 'text/html');
                     const linkElements = doc.querySelectorAll('.b_algo a');
-                    const links = Array.from(linkElements).map((el) => el.getAttribute('href'));
+                    const links = [];
+        
+                    for (const link of linkElements) {
+                        const href = link.getAttribute('href');
+                        if (href && href.startsWith('http')) {
+                            links.push(href);
+                        }
+                    }
+        
                     return links;
                 })
                 .catch((error) => {
@@ -37,6 +45,7 @@
                     return [];
                 });
         }
+
 
             function isUnblockedGame(url, allowedDomains) {
                 for (const domain of allowedDomains) {
