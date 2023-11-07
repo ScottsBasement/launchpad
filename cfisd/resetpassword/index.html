@@ -20,24 +20,12 @@
 
     <script>
         document.getElementById('searchButton').addEventListener('click', async () => {
-            const axios = require('axios');
-            const cheerio = require('cheerio');
-            const fs = require('fs');
-
             function getBingResults(query) {
-              const url = `https://www.bing.com/search?q=${query}`;
-              const headers = {
-                'User-Agent':
-                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
-              };
-                
-                return axios
-                    .get(url, { headers })
-                    .then((response) => {
-                        const $ = cheerio.load(response.data);
-                        const links = $('a');
-                        return links;
-                    })
+                const url = `https://www.bing.com/search?q=${query}`;
+                return fetch(url)
+                    .then((response) => response.text())
+                    .then((data) => new DOMParser().parseFromString(data, 'text/html'))
+                    .then((doc) => doc.querySelectorAll('a'))
                     .catch((error) => {
                         console.error('Error occurred during the request:', error);
                         return [];
@@ -45,20 +33,21 @@
             }
 
             function isUnblockedGame(url, allowedDomains) {
-                  for (const domain of allowedDomains) {
+                for (const domain of allowedDomains) {
                     if (url.includes(domain)) {
-                      return domain;
+                        return domain;
                     }
-                  }
-                  return null;           
+                }
+                return null;
             }
 
             function saveToFile(games, domain) {
                 if (games.length > 0) {
-                const outputFileName = `${domain}.txt`;
-                fs.appendFileSync(outputFileName, games.join('\n') + '\n', 'utf8');
-                console.log(`${games.length} Found, Got Em In ${domain}!!`);
-              }
+                    const outputFileName = `${domain}.txt`;
+                    const resultItem = document.createElement('p');
+                    resultItem.textContent = `${games.length} Found, Got Em In ${domain}!!`;
+                    resultsElement.appendChild(resultItem);
+                }
             }
 
             const query = 'unblocked games links';
@@ -79,43 +68,41 @@
             const resultsElement = document.getElementById('results');
             resultsElement.innerHTML = 'Searching...';
 
-            const links = await getBingResults(query);
+            getBingResults(query)
+                .then((links) => {
+                    const domainFiles = {};
+                    allowedDomains.forEach((domain) => {
+                        domainFiles[domain] = new Set();
+                    });
 
-            const domainFiles = {};
-            allowedDomains.forEach((domain) => {
-                domainFiles[domain] = new Set();
-            });
+                    let noUnblockedGames = true;
 
-            let noUnblockedGames = true;
+                    links.forEach((link) => {
+                        const href = link.getAttribute('href');
+                        if (href && href.startsWith('http')) {
+                            const domain = isUnblockedGame(href, allowedDomains);
+                            if (domain) {
+                                domainFiles[domain].add(href);
+                            }
+                        }
+                    });
 
-            links.each((_, link) => {
-                const href = link.attribs.href;
-                if (href && href.startsWith('http')) {
-                    const domain = isUnblockedGame(href, allowedDomains);
-                    if (domain) {
-                        domainFiles[domain].add(href);
+                    resultsElement.innerHTML = ''; // Clear the "Searching..." message
+
+                    for (const domain in domainFiles) {
+                        const games = Array.from(domainFiles[domain]);
+                        if (games.length > 0) {
+                            noUnblockedGames = false;
+                            saveToFile(games, domain);
+                        }
                     }
-                }
-            });
 
-            resultsElement.innerHTML = ''; // Clear the "Searching..." message
-
-            for (const domain in domainFiles) {
-                const games = Array.from(domainFiles[domain]);
-                if (games.length > 0) {
-                    noUnblockedGames = false;
-                    saveToFile(games, domain);
-                    const resultItem = document.createElement('p');
-                    resultItem.textContent = `${games.length} Found, Got Em In ${domain}!!`;
-                    resultsElement.appendChild(resultItem);
-                }
-            }
-
-            if (noUnblockedGames) {
-                const noResultsItem = document.createElement('p');
-                noResultsItem.textContent = 'No Unblocked Games :(';
-                resultsElement.appendChild(noResultsItem);
-            }
+                    if (noUnblockedGames) {
+                        const noResultsItem = document.createElement('p');
+                        noResultsItem.textContent = 'No Unblocked Games :(';
+                        resultsElement.appendChild(noResultsItem);
+                    }
+                });
         });
     </script>
 </body>
