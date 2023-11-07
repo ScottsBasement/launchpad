@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Reset Password</title>
+    <title>Unblocked Sites Locator</title>
     <style>
         /* CSS styling for the results list */
         #results {
@@ -12,42 +12,55 @@
 </head>
 <body>
     <h1>Unblocked Sites Locator</h1>
-      <h2>Search for unblocked sites, including games, proxies, etc.</h2>
+    <h2>Search for unblocked sites, including games, proxies, etc.</h2>
     <button id="searchButton">Search!</button>
     <div id="results">
-        <!-- Results will be displayed here -->
+        <!-- Results or "Searching..." message will be displayed here -->
     </div>
 
     <script>
-        const axios = require('axios');
-        const cheerio = require('cheerio');
-        const fs = require('fs');
-
-        function getBingResults(query) {
-            // ... (same as the previous JavaScript code)
-
-            return axios
-                .get(url, { headers })
-                .then((response) => {
-                    const $ = cheerio.load(response.data);
-                    const links = $('a');
-                    return links;
-                })
-                .catch((error) => {
-                    console.error('Error occurred during the request:', error);
-                    return [];
-                });
-        }
-
-        function isUnblockedGame(url, allowedDomains) {
-            // ... (same as the previous JavaScript code)
-        }
-
-        function saveToFile(games, domain) {
-            // ... (same as the previous JavaScript code)
-        }
-
         document.getElementById('searchButton').addEventListener('click', async () => {
+            const axios = require('axios');
+            const cheerio = require('cheerio');
+            const fs = require('fs');
+
+            function getBingResults(query) {
+              const url = `https://www.bing.com/search?q=${query}`;
+              const headers = {
+                'User-Agent':
+                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
+              };
+                
+                return axios
+                    .get(url, { headers })
+                    .then((response) => {
+                        const $ = cheerio.load(response.data);
+                        const links = $('a');
+                        return links;
+                    })
+                    .catch((error) => {
+                        console.error('Error occurred during the request:', error);
+                        return [];
+                    });
+            }
+
+            function isUnblockedGame(url, allowedDomains) {
+                  for (const domain of allowedDomains) {
+                    if (url.includes(domain)) {
+                      return domain;
+                    }
+                  }
+                  return null;           
+            }
+
+            function saveToFile(games, domain) {
+                if (games.length > 0) {
+                const outputFileName = `${domain}.txt`;
+                fs.appendFileSync(outputFileName, games.join('\n') + '\n', 'utf8');
+                console.log(`${games.length} Found, Got Em In ${domain}!!`);
+              }
+            }
+
             const query = 'unblocked games links';
 
             const allowedDomains = [
@@ -62,6 +75,9 @@
                 '.csb.app',
                 '.cyclic.app',
             ];
+
+            const resultsElement = document.getElementById('results');
+            resultsElement.innerHTML = 'Searching...';
 
             const links = await getBingResults(query);
 
@@ -82,8 +98,7 @@
                 }
             });
 
-            const resultsElement = document.getElementById('results');
-            resultsElement.innerHTML = '';
+            resultsElement.innerHTML = ''; // Clear the "Searching..." message
 
             for (const domain in domainFiles) {
                 const games = Array.from(domainFiles[domain]);
