@@ -1,0 +1,15 @@
+.forgot {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #0074e4; /* Background color of the "button" */
+  color: #fff; /* Text color */
+  text-decoration: none; /* Remove underline */
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.forgot:hover {
+  background-color: #0057b3; /* Change the background color on hover */
+}
