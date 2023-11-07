@@ -27,16 +27,17 @@
             return fetch(proxyUrl + targetUrl)
                 .then((response) => response.text())
                 .then((data) => {
-                    const doc = new DOMParser().parseFromString(data, 'text/html');
-                    const linkElements = doc.querySelectorAll('.b_algo a');
-                    const links = [];
-        
-                    for (const link of linkElements) {
-                        const href = link.getAttribute('href');
-                        if (href && href.startsWith('http')) {
-                            links.push(href);
-                        }
+                    // Find the JSON data within the HTML response
+                    const jsonMatch = data.match(/\"results\":\"(.+?)\"}/);
+                    if (!jsonMatch) {
+                        throw new Error('JSON data not found in the response');
                     }
+        
+                    const jsonString = jsonMatch[1];
+                    const jsonData = JSON.parse(jsonString);
+        
+                    // Extract and return links
+                    const links = jsonData.map((item) => item.url);
         
                     return links;
                 })
@@ -45,6 +46,7 @@
                     return [];
                 });
         }
+
 
 
             function isUnblockedGame(url, allowedDomains) {
