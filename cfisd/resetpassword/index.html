@@ -17,24 +17,36 @@
     <div id="results">
         <!-- Results or "Searching..." message will be displayed here -->
     </div>
+    <div id="progress">
+        <progress value="0" max="100" id="progressBar"></progress>
+        <p id="progressText">0%</p>
+    </div>
 
     <script>
         document.getElementById('searchButton').addEventListener('click', async () => {
             const puppeteer = require('puppeteer');
-
+        
             async function getBingResults(query) {
                 const browser = await puppeteer.launch();
                 const page = await browser.newPage();
                 await page.goto(`https://www.bing.com/search?q=${query}`);
-
+        
                 const links = await page.evaluate(() => {
                     const linkElements = Array.from(document.querySelectorAll('.b_algo a'));
                     return linkElements.map(link => link.getAttribute('href'));
                 });
-
+        
+                // Calculate progress based on the number of links found
+                const progress = (links.length / linkElements.length) * 100;
+        
+                // Update progress bar
+                progressBar.value = progress;
+                progressText.textContent = `${Math.round(progress)}%`;
+        
                 await browser.close();
                 return links;
             }
+        
 
             function isUnblockedGame(url, allowedDomains) {
                 for (const domain of allowedDomains) {
