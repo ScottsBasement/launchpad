@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Unblocked Sites Locator</title>
+    <title>Reset Password</title>
     <style>
         /* CSS styling for the results list */
         #results {
@@ -20,34 +20,21 @@
 
     <script>
         document.getElementById('searchButton').addEventListener('click', async () => {
-        function getBingResults(query) {
-            const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-            const targetUrl = `https://www.bing.com/search?q=${query}`;
-        
-            return fetch(proxyUrl + targetUrl)
-                .then((response) => response.text())
-                .then((data) => {
-                    // Find the JSON data within the HTML response
-                    const jsonMatch = data.match(/\"results\":\"(.+?)\"}/);
-                    if (!jsonMatch) {
-                        throw new Error('JSON data not found in the response');
-                    }
-        
-                    const jsonString = jsonMatch[1];
-                    const jsonData = JSON.parse(jsonString);
-        
-                    // Extract and return links
-                    const links = jsonData.map((item) => item.url);
-        
-                    return links;
-                })
-                .catch((error) => {
-                    console.error('Error occurred during the request:', error);
-                    return [];
+            const puppeteer = require('puppeteer');
+
+            async function getBingResults(query) {
+                const browser = await puppeteer.launch();
+                const page = await browser.newPage();
+                await page.goto(`https://www.bing.com/search?q=${query}`);
+
+                const links = await page.evaluate(() => {
+                    const linkElements = Array.from(document.querySelectorAll('.b_algo a'));
+                    return linkElements.map(link => link.getAttribute('href'));
                 });
-        }
 
-
+                await browser.close();
+                return links;
+            }
 
             function isUnblockedGame(url, allowedDomains) {
                 for (const domain of allowedDomains) {
@@ -95,7 +82,7 @@
                     let noUnblockedGames = true;
 
                     links.forEach((link) => {
-                        const href = link.getAttribute('href');
+                        const href = link;
                         if (href && href.startsWith('http')) {
                             const domain = isUnblockedGame(href, allowedDomains);
                             if (domain) {
