@@ -2,13 +2,9 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Unblocked Sites Locator</title>
-    <style>
-        /* CSS styling for the results list */
-        #results {
-            margin-top: 20px;
-        }
-    </style>
+    <title>Reset Password</title>
+    <!-- Add the favicon link here -->
+    <link rel="icon" href="https://cdn.classlink.com/production/launchpad/resources/images/favicon/apple-touch-icon.png" type="image/png">
 </head>
 <body>
     <h1>Unblocked Sites Locator</h1>
@@ -18,40 +14,26 @@
         <!-- Results or "Searching..." message will be displayed here -->
     </div>
 
-    <div id="progress">
-        <progress value="0" max="100" id="progressBar"></progress>
-        <p id="progressText">0%</p>
-    </div>
-
-    <script src="https://unpkg.com/puppeteer@10.0.0"></script>
-
     <script>
         document.getElementById('searchButton').addEventListener('click', async () => {
-            const progressBar = document.getElementById('progressBar');
-            const progressText = document.getElementById('progressText');
+            const query = 'unblocked games links';
 
-            // Ensure Puppeteer is available before proceeding
-            if (window.puppeteer) {
-                const browser = await puppeteer.launch();
-                const page = await browser.newPage();
-                await page.goto(`https://www.bing.com/search?q=${query}`);
-
-                const links = await page.evaluate(() => {
-                    const linkElements = Array.from(document.querySelectorAll('.b_algo a'));
-                    return linkElements.map(link => link.getAttribute('href'));
-                });
-
-                // Calculate progress
-                const progress = (links.length / linkElements.length) * 100;
-
-                // Update progress bar
-                progressBar.value = progress;
-                progressText.textContent = `${Math.round(progress)}%`;
-
-                await browser.close();
-            } else {
-                console.error('Puppeteer is not available.');
-            }
+            fetch('/scrape', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle the scraped data received from the server
+                // Update the results in the client
+                console.log(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         });
     </script>
 </body>
