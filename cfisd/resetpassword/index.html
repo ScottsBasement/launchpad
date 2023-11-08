@@ -95,7 +95,7 @@
         var a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
         a.download = "games.txt";
-        a.style.display = "none";
+        a.style display = "none";
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -142,6 +142,15 @@
     // Populate the domain dropdown with allowed domains
     var allowedDomains = [".github.io", ".vercel.app", ".netlify.app", ".firebaseapp.com", ".pages.dev", ".web.app"];
     populateDomainDropdown(allowedDomains);
+
+    // Add event listener to toggle selection on dropdown options
+    var selectDomain = document.getElementById("selectDomain");
+    selectDomain.addEventListener("click", function (event) {
+      var target = event.target;
+      if (target.tagName === "OPTION") {
+        target.selected = !target.selected;
+      }
+    });
   </script>
 </body>
 </html>
