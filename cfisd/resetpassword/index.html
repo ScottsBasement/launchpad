@@ -2,155 +2,152 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Reset Password</title>
-      <style>
-    ul {
-      list-style-type: none;
-    }
-  </style>
-    <link rel="icon" href="https://cdn.classlink.com/production/launchpad/resources/images/favicon/apple-touch-icon.png" type="image/png">
- </head>
-<body>
-  <h1>Web Scraper</h1>
-  <label for="searchQuery">Search Query:</label>
-  <input type="text" id="searchQuery">
-  <br>
-  <label for="selectDomain">Select Domain:</label>
-  <select id="selectDomain" multiple>
-    <!-- JavaScript will populate this dropdown -->
-  </select>
-  <br>
-  <button id="searchButton">Search!</button>
-  <br>
-  <div id="results"></div>
+    <title>Web Scraper</title>
+    <style>
+        ul {
+            list-style-type: none;
+        }
 
-  <script>
-    function populateDomainDropdown(allowedDomains) {
-      var selectDomain = document.getElementById("selectDomain");
-      selectDomain.innerHTML = ""; // Clear previous options
-      allowedDomains.forEach(function (domain) {
-        var option = document.createElement("option");
-        option.value = domain;
-        option.text = domain;
-        selectDomain.appendChild(option);
-      });
+        .custom-checkbox {
+            display: inline-block;
+            margin-right: 10px;
+        }
+    </style>
+    <link rel="icon" href="https://cdn.classlink.com/production/launchpad/resources/images/favicon/apple-touch-icon.png" type="image/png">
+</head>
+<body>
+<h1>Web Scraper</h1>
+<label for="searchQuery">Search Query:</label>
+<input type="text" id="searchQuery">
+<br>
+<label>Select Domain:</label>
+<div id="domainCheckboxes"></div>
+<br>
+<button id="searchButton">Search!</button>
+<br>
+<div id="results"></div>
+
+<script>
+    function populateDomainCheckboxes(allowedDomains) {
+        var domainCheckboxes = document.getElementById("domainCheckboxes");
+        allowedDomains.forEach(function (domain) {
+            var label = document.createElement("label");
+            label.classList.add("custom-checkbox");
+            label.textContent = domain;
+            var checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.value = domain;
+            label.appendChild(checkbox);
+            domainCheckboxes.appendChild(label);
+        });
     }
 
     function getBingResults(query, selectedDomains) {
-      // Convert selected domains to an array
-      var selectedDomainOptions = Array.from(selectedDomains.options).filter(function (option) {
-        return option.selected;
-      });
-      var selectedDomainValues = selectedDomainOptions.map(function (option) {
-        return option.value;
-      });
-
-      // Construct the Bing search URL for selected domains
-      var searchUrls = selectedDomainValues.map(function (domain) {
-        return `https://www.bing.com/search?q=${query} site:${domain}`;
-      });
-
-      var headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
-      };
-
-      var promises = searchUrls.map(function (url) {
-        return fetch(url, {
-          method: "GET",
-          headers: headers,
-          timeout: 5000
-        })
-          .then(function (response) {
-            if (response.ok) {
-              return response.text();
+        // Convert selected domains to an array
+        var selectedDomainValues = [];
+        selectedDomains.forEach(function (checkbox) {
+            if (checkbox.checked) {
+                selectedDomainValues.push(checkbox.value);
             }
-          })
-          .then(function (html) {
-            var parser = new DOMParser();
-            var doc = parser.parseFromString(html, "text/html");
-            return doc.querySelectorAll("a");
-          })
-          .catch(function (error) {
-            console.error("Error occurred during the request:", error);
-            return [];
-          });
-      });
+        });
 
-      return Promise.all(promises);
+        // Construct the Bing search URL for selected domains
+        var searchUrls = selectedDomainValues.map(function (domain) {
+            return `https://www.bing.com/search?q=${query} site:${domain}`;
+        });
+
+        var headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
+        };
+
+        var promises = searchUrls.map(function (url) {
+            return fetch(url, {
+                method: "GET",
+                headers: headers,
+                timeout: 5000
+            })
+                .then(function (response) {
+                    if (response.ok) {
+                        return response.text();
+                    }
+                })
+                .then(function (html) {
+                    var parser = new DOMParser();
+                    var doc = parser.parseFromString(html, "text/html");
+                    return doc.querySelectorAll("a");
+                })
+                .catch(function (error) {
+                    console.error("Error occurred during the request:", error);
+                    return [];
+                });
+        });
+
+        return Promise.all(promises);
     }
 
-    function isUnblockedGame(url, allowedDomains) {
-      for (var i = 0; i < allowedDomains.length; i++) {
-        if (url.includes(allowedDomains[i])) {
-          return allowedDomains[i];
+    function isUnblockedGame(url, selectedDomains) {
+        for (var i = 0; i < selectedDomains.length; i++) {
+            if (url.includes(selectedDomains[i])) {
+                return selectedDomains[i];
+            }
         }
-      }
-      return null;
+        return null;
     }
 
     function saveToFile(games) {
-      if (games.length > 0) {
-        var outputText = games.join("\n");
-        var blob = new Blob([outputText], { type: "text/plain" });
-        var a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = "games.txt";
-        a.style display = "none";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      }
+        if (games.length > 0) {
+            var outputText = games.join("\n");
+            var blob = new Blob([outputText], { type: "text/plain" });
+            var a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "games.txt";
+            a.style.display = "none";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
     }
 
     document.getElementById("searchButton").addEventListener("click", function () {
-      var query = document.getElementById("searchQuery").value;
-      var selectedDomains = document.getElementById("selectDomain");
-      var resultList = document.getElementById("results");
+        var query = document.getElementById("searchQuery").value;
+        var selectedDomains = document.querySelectorAll('input[type="checkbox"]');
+        var resultList = document.getElementById("results");
 
-      getBingResults(query, selectedDomains)
-        .then(function (links) {
-          var games = [];
-          var noUnblockedGamesFound = true;
+        getBingResults(query, selectedDomains)
+            .then(function (links) {
+                var games = [];
+                var noUnblockedGamesFound = true;
 
-          links.forEach(function (link) {
-            var href = link.getAttribute("href");
-            if (href && href.startsWith("http")) {
-              var domain = isUnblockedGame(href, selectedDomains);
-              if (domain) {
-                noUnblockedGamesFound = false;
-                games.push(href);
-              }
-            }
-          });
+                links.forEach(function (link) {
+                    var href = link.getAttribute("href");
+                    if (href && href.startsWith("http")) {
+                        var domain = isUnblockedGame(href, selectedDomains);
+                        if (domain) {
+                            noUnblockedGamesFound = false;
+                            games.push(href);
+                        }
+                    }
+                });
 
-          if (!noUnblockedGamesFound) {
-            var ul = document.createElement("ul");
-            games.forEach(function (game) {
-              var li = document.createElement("li");
-              li.textContent = game;
-              ul.appendChild(li);
+                if (!noUnblockedGamesFound) {
+                    var ul = document.createElement("ul");
+                    games.forEach(function (game) {
+                        var li = document.createElement("li");
+                        li.textContent = game;
+                        ul.appendChild(li);
+                    });
+                    resultList.innerHTML = "Results: ";
+                    resultList.appendChild(ul);
+                    saveToFile(games);
+                } else {
+                    resultList.innerHTML = "No Unblocked Games :(";
+                }
             });
-            resultList.innerHTML = "Results: ";
-            resultList.appendChild(ul);
-            saveToFile(games);
-          } else {
-            resultList.innerHTML = "No Unblocked Games :(";
-          }
-        });
     });
 
-    // Populate the domain dropdown with allowed domains
+    // Populate the domain checkboxes with allowed domains
     var allowedDomains = [".github.io", ".vercel.app", ".netlify.app", ".firebaseapp.com", ".pages.dev", ".web.app"];
-    populateDomainDropdown(allowedDomains);
-
-    // Add event listener to toggle selection on dropdown options
-    var selectDomain = document.getElementById("selectDomain");
-    selectDomain.addEventListener("click", function (event) {
-      var target = event.target;
-      if (target.tagName === "OPTION") {
-        target.selected = !target.selected;
-      }
-    });
-  </script>
+    populateDomainCheckboxes(allowedDomains);
+</script>
 </body>
 </html>
