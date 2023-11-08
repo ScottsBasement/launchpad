@@ -3,38 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <title>Reset Password</title>
-    <!-- Add the favicon link here -->
+      <style>
+    ul {
+      list-style-type: none;
+    }
+  </style>
     <link rel="icon" href="https://cdn.classlink.com/production/launchpad/resources/images/favicon/apple-touch-icon.png" type="image/png">
-</head>
+ </head>
 <body>
-    <h1>Unblocked Sites Locator</h1>
-    <h2>Search for unblocked sites, including games, proxies, etc.</h2>
-    <button id="searchButton">Search!</button>
-    <div id="results">
-        <!-- Results or "Searching..." message will be displayed here -->
-    </div>
+  <h1>Web Scraper</h1>
+  <label for="searchQuery">Search Query:</label>
+  <input type="text" id="searchQuery">
+  <br>
+  <label for="selectDomain">Select Domain:</label>
+  <select id="selectDomain" multiple>
+    <!-- JavaScript will populate this dropdown -->
+  </select>
+  <br>
+  <button id="searchButton">Search!</button>
+  <br>
+  <div id="results"></div>
 
-    <script>
-        document.getElementById('searchButton').addEventListener('click', async () => {
-            const query = 'unblocked games links';
+  <script>
+    function populateDomainDropdown(allowedDomains) {
+      var selectDomain = document.getElementById("selectDomain");
+      selectDomain.innerHTML = ""; // Clear previous options
+      allowedDomains.forEach(function (domain) {
+        var option = document.createElement("option");
+        option.value = domain;
+        option.text = domain;
+        selectDomain.appendChild(option);
+      });
+    }
 
-            fetch('/scrape', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ query }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Handle the scraped data received from the server
-                // Update the results in the client
-                console.log(data);
-            })
-            .catch(error => {
-                console.error('Error:', error);
+    function getBingResults(query, selectedDomains) {
+      // Convert selected domains to an array
+      var selectedDomainOptions = Array.from(selectedDomains.options).filter(function (option) {
+        return option.selected;
+      });
+      var selectedDomainValues = selectedDomainOptions.map(function (option) {
+        return option.value;
+      });
+
+      // Construct the Bing search URL for selected domains
+      var searchUrls = selectedDomainValues.map(function (domain) {
+        return `https://www.bing.com/search?q=${query} site:${domain}`;
+      });
+
+      var headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
+      };
+
+      var promises = searchUrls.map(function (url) {
+        return fetch(url, {
+          method: "GET",
+          headers: headers,
+          timeout: 5000
+        })
+          .then(function (response) {
+            if (response.ok) {
+              return response.text();
+            }
+          })
+          .then(function (html) {
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(html, "text/html");
+            return doc.querySelectorAll("a");
+          })
+          .catch(function (error) {
+            console.error("Error occurred during the request:", error);
+            return [];
+          });
+      });
+
+      return Promise.all(promises);
+    }
+
+    function isUnblockedGame(url, allowedDomains) {
+      for (var i = 0; i < allowedDomains.length; i++) {
+        if (url.includes(allowedDomains[i])) {
+          return allowedDomains[i];
+        }
+      }
+      return null;
+    }
+
+    function saveToFile(games) {
+      if (games.length > 0) {
+        var outputText = games.join("\n");
+        var blob = new Blob([outputText], { type: "text/plain" });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "games.txt";
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    }
+
+    document.getElementById("searchButton").addEventListener("click", function () {
+      var query = document.getElementById("searchQuery").value;
+      var selectedDomains = document.getElementById("selectDomain");
+      var resultList = document.getElementById("results");
+
+      getBingResults(query, selectedDomains)
+        .then(function (links) {
+          var games = [];
+          var noUnblockedGamesFound = true;
+
+          links.forEach(function (link) {
+            var href = link.getAttribute("href");
+            if (href && href.startsWith("http")) {
+              var domain = isUnblockedGame(href, selectedDomains);
+              if (domain) {
+                noUnblockedGamesFound = false;
+                games.push(href);
+              }
+            }
+          });
+
+          if (!noUnblockedGamesFound) {
+            var ul = document.createElement("ul");
+            games.forEach(function (game) {
+              var li = document.createElement("li");
+              li.textContent = game;
+              ul.appendChild(li);
             });
+            resultList.innerHTML = "Results: ";
+            resultList.appendChild(ul);
+            saveToFile(games);
+          } else {
+            resultList.innerHTML = "No Unblocked Games :(";
+          }
         });
-    </script>
+    });
+
+    // Populate the domain dropdown with allowed domains
+    var allowedDomains = [".github.io", ".vercel.app", ".netlify.app", ".firebaseapp.com", ".pages.dev", ".web.app"];
+    populateDomainDropdown(allowedDomains);
+  </script>
 </body>
 </html>
